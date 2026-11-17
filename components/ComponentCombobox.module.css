@@ -1,0 +1,131 @@
+.root {
+  position: relative;
+  min-width: 0;
+}
+
+.input {
+  padding-right: 36px;
+  text-overflow: ellipsis;
+}
+
+.chevron {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -6px;
+  border-right: 2px solid var(--navy);
+  border-bottom: 2px solid var(--navy);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.list {
+  position: absolute;
+  z-index: 50;
+  left: 0;
+  right: 0;
+  top: calc(100% + 4px);
+  max-height: 260px;
+  overflow-y: auto;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-height: var(--control-height);
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.active {
+  background: var(--surface);
+}
+
+.selected .name {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.name {
+  overflow-wrap: anywhere;
+}
+
+/* Retail and Bulk shown as two separate labelled columns */
+.prices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.price {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 2px 8px;
+  background: var(--surface);
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.active .price {
+  background: var(--white);
+}
+
+/* the price type currently chosen in the tabs is the one that goes into the bill */
+.price.priceActive,
+.active .price.priceActive {
+  background: var(--navy);
+}
+.priceActive .priceLabel,
+.priceActive .priceValue {
+  color: var(--white);
+}
+
+.priceLabel {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.priceValue {
+  color: var(--navy);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .option {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  .name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .prices {
+    flex: none;
+    grid-template-columns: 140px 140px;
+  }
+}
+
+.empty {
+  padding: var(--space-3);
+  color: var(--muted);
+  text-align: center;
+}
