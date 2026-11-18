@@ -4,9 +4,14 @@ import { useState } from 'react';
 import Modal from './Modal';
 import styles from './ComponentModal.module.css';
 
-/** "+ Add New Component" dialog. Calls onSaved(component) after it is stored. */
-export default function ComponentModal({ onClose, onSaved, onError }) {
-  const [form, setForm] = useState({ name: '', bulkPrice: '', retailPrice: '' });
+/** Add / edit component dialog (edit when `initial` is given). Calls onSaved(component) after it is stored. */
+export default function ComponentModal({ initial, onClose, onSaved, onError }) {
+  const isEdit = Boolean(initial);
+  const [form, setForm] = useState({
+    name: initial?.name ?? '',
+    bulkPrice: initial ? String(initial.bulkPrice) : '',
+    retailPrice: initial ? String(initial.retailPrice) : '',
+  });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -38,8 +43,8 @@ export default function ComponentModal({ onClose, onSaved, onError }) {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/components', {
-        method: 'POST',
+      const res = await fetch(isEdit ? `/api/components/${initial._id}` : '/api/components', {
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: form.name.trim(),
@@ -69,7 +74,7 @@ export default function ComponentModal({ onClose, onSaved, onError }) {
 
   return (
     <Modal
-      title="Add New Component"
+      title={isEdit ? 'Edit Component' : 'Add New Component'}
       size="md"
       labelledBy="new-component-title"
       onClose={saving ? undefined : onClose}
@@ -80,7 +85,7 @@ export default function ComponentModal({ onClose, onSaved, onError }) {
           </button>
           <button type="submit" form="new-component-form" className="btn btn-primary" disabled={saving}>
             {saving && <span className="spinner" />}
-            Save Component
+            {isEdit ? 'Update Component' : 'Save Component'}
           </button>
         </>
       }

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import ComponentModal from '@/components/ComponentModal';
-import { PlusIcon, SearchIcon } from '@/components/Icons';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { PencilIcon, PlusIcon, SearchIcon, TrashIcon } from '@/components/Icons';
 import { useToast } from '@/components/Toast';
 import { formatINR } from '@/lib/format';
 import styles from '../page.module.css'; // same header / toolbar / table-card look as the dashboard
@@ -15,6 +16,9 @@ export default function ComponentsPage() {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [toDelete, setToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -40,12 +44,31 @@ export default function ComponentsPage() {
     return term ? components.filter((c) => c.name.toLowerCase().includes(term)) : components;
   }, [components, search]);
 
+  const sortByName = (list) =>
+    [...list].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
   function handleSaved(component) {
-    setComponents((list) =>
-      [...list, component].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }))
-    );
+    const wasEdit = Boolean(editing);
+    setComponents((list) => sortByName(wasEdit ? list.map((c) => (c._id === component._id ? component : c)) : [...list, component]));
     setAdding(false);
-    toast.success(`"${component.name}" added.`);
+    setEditing(null);
+    toast.success(`"${component.name}" ${wasEdit ? 'updated' : 'added'}.`);
+  }
+
+  async function confirmDelete() {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/components/${toDelete._id}`, { method: 'DELETE' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Delete failed.');
+      setComponents((list) => list.filter((c) => c._id !== toDelete._id));
+      toast.success(`"${toDelete.name}" deleted.`);
+      setToDelete(null);
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
@@ -117,6 +140,7 @@ export default function ComponentsPage() {
                     <th>Component</th>
                     <th className="num">Bulk Price</th>
                     <th className="num">Retail Price</th>
+                    <th>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -131,6 +155,26 @@ export default function ComponentsPage() {
                       <td data-label="Retail Price" className="num">
                         {formatINR(c.retailPrice)}
                       </td>
+                      <td data-label="">
+                        <div className={styles.actions}>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => setEditing(c)}
+                            aria-label={`Edit ${c.name}`}
+                          >
+                            <PencilIcon /> <span className={styles.btnLabel}>Edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger-ghost btn-sm"
+                            onClick={() => setToDelete(c)}
+                            aria-label={`Delete ${c.name}`}
+                          >
+                            <TrashIcon /> <span className={styles.btnLabel}>Delete</span>
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -140,11 +184,25 @@ export default function ComponentsPage() {
         </section>
       </main>
 
-      {adding && (
+      {(adding || editing) && (
         <ComponentModal
-          onClose={() => setAdding(false)}
+          initial={editing || undefined}
+          onClose={() => {
+            setAdding(false);
+            setEditing(null);
+          }}
           onSaved={handleSaved}
           onError={(m) => toast.error(m)}
+        />
+      )}
+
+      {toDelete && (
+        <ConfirmDialog
+          title="Delete component?"
+          message={`"${toDelete.name}" will be removed from the component list. Existing quotations keep their saved prices and are not affected.`}
+          loading={deleting}
+          onConfirm={confirmDelete}
+          onCancel={() => setToDelete(null)}
         />
       )}
     </>
